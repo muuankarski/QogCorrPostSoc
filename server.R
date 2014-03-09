@@ -98,8 +98,9 @@ shinyServer(function(input, output) {
         varx <- dat[, input$variableX]
         cntry <- as.character(dat$cname)
         contName <- as.character(dat$contName)
+        group1 <- as.character(dat$group1)
         year <- dat$year
-        datPlotX <- data.frame(vary,varx,cntry,year,contName)
+        datPlotX <- data.frame(vary,varx,cntry,year,contName,group1)
         datPlot <- datPlotX[datPlotX$year == input$year,]    
         
         })
@@ -109,23 +110,23 @@ shinyServer(function(input, output) {
     
     plotInput <- reactive({
         
-        cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442")
+        cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442","orange","dim grey")
         datPlot <- datasetInput()
         
 
-        ## Subset russia data
-        if (input$hl_country1 == "none") {
-            highlight_dot <- scale_x_continuous()
-            highlight_name <- scale_y_continuous()
-            }
-        if (input$hl_country1 != "none") {
-            dat_highlight <- datPlot[datPlot$cntry %in% input$hl_country1,]
-            highlight_dot <- geom_point(data=dat_highlight, aes(x=varx, y=vary,group=1),
-                       color="red", size=5)
-            highlight_name <- geom_text(data=dat_highlight, aes(x=varx, y=vary,
-                                           label=cntry,group=1),
-                          size=5, color="red",vjust=1, hjust=-.2)
-        }
+        ## highlight a country
+#         if (input$hl_country1 == "none") {
+#             highlight_dot <- scale_x_continuous()
+#             highlight_name <- scale_y_continuous()
+#             }
+#         if (input$hl_country1 != "none") {
+#             dat_highlight <- datPlot[datPlot$cntry %in% input$hl_country1,]
+#             highlight_dot <- geom_point(data=dat_highlight, aes(x=varx, y=vary,group=1),
+#                        color="red", size=5)
+#             highlight_name <- geom_text(data=dat_highlight, aes(x=varx, y=vary,
+#                                            label=cntry,group=1),
+#                           size=5, color="red",vjust=1, hjust=-.2)
+#         }
         # log scale
         if (input$log_scale_scatter == TRUE) {
             scale_y <- scale_y_log10()
@@ -135,14 +136,15 @@ shinyServer(function(input, output) {
             scale_y <- scale_y_continuous()
             scale_x <- scale_x_continuous()
         }
-        # subset the continent
-        if (input$continent == "All") datPlot <- datPlot
-        if (input$continent != "All") datPlot <- datPlot[datPlot$contName == input$continent,]
-        
-        
+         # subset the continent
+         if (input$show_other == TRUE) datPlot <- datPlot
+         if (input$show_other == FALSE) datPlot <- datPlot[datPlot$group != "X_other",]
+
+#         
+#         
         ggplot(datPlot, aes(x=varx, y=vary, 
                             label=cntry,group=1)) +
-            geom_point(data=datPlot, aes(color=contName), size=4) +
+            geom_point(data=datPlot, aes(color=group1), size=4) +
             geom_smooth(method=lm, se=TRUE, alpha=.5, 
                         linetype="dashed", size=0.5) +  
             geom_text(size=4, vjust=-0.8, hjust=0.5) +
@@ -157,105 +159,135 @@ shinyServer(function(input, output) {
             theme(axis.text = element_text(size=16)) +
             guides(color = guide_legend(nrow = 2)) + 
             labs(title=paste("Year",input$year)) +
-            highlight_dot +
-            highlight_name +
+            #highlight_dot +
+            #highlight_name +
             scale_y +
             scale_x
     })
     
-    output$correlation <- renderPrint({
-        vary <- dat[, input$variableY]
-        varx <- dat[, input$variableX]
-        cntry <- as.character(dat$cname)
-        contName <- as.character(dat$contName)
-        year <- dat$year
-        datPlotX <- data.frame(vary,varx,cntry,year,contName)
-        datPlot <- datPlotX[datPlotX$year == input$year,]
-        if (input$continent == "All") datPlot <- datPlot
-        if (input$continent != "All") datPlot <- datPlot[datPlot$contName == input$continent,]
-        datPlot <- datPlot[!is.na(datPlot$varx),]
-        datPlot <- datPlot[!is.na(datPlot$vary),]
-        datPlot <- datPlot[!is.na(datPlot$cntry),]
-        paste("Correlation =",cor(datPlot$varx,datPlot$vary))
-        
-    })
     
     output$plot <- renderPlot({
         print(plotInput())
     })
+
     
     #******************************#
     #*** Time Scatterplot
     
-    datasetInputT <- reactive({
-        #varx <- datPlot$perGini
-        vary <- dat[, input$variableY]
-        varx <- dat[, input$variableX]
-        cntry <- as.character(dat$cname)
-        year <- dat$year
-        datPlot <- data.frame(vary,varx,cntry,year)
-        datPlot <- datPlot[datPlot$cntry %in% c(input$Country1,
-                                                input$Country2,
-                                                input$Country3,
-                                                input$Country4,
-                                                input$Country5),]
-        datPlot <- datPlot[datPlot$year >= input$yearStart,]
-        datPlot <- datPlot[datPlot$year <= input$yearEnd,]
-        datPlot <- datPlot[!is.na(datPlot$varx), ]
-        datPlotT <- datPlot[!is.na(datPlot$vary), ]
-        datPlotT <- datPlotT[with(datPlotT, order(year)), ]
-    })
+#     datasetInputT <- reactive({
+#         #varx <- datPlot$perGini
+#         vary <- dat[, input$variableY]
+#         varx <- dat[, input$variableX]
+#         cntry <- as.character(dat$cname)
+#         year <- dat$year
+#         datPlot <- data.frame(vary,varx,cntry,year)
+#         datPlot <- datPlot[datPlot$cntry %in% c(input$Country1,
+#                                                 input$Country2,
+#                                                 input$Country3,
+#                                                 input$Country4,
+#                                                 input$Country5),]
+#         datPlot <- datPlot[datPlot$year >= input$yearStart,]
+#         datPlot <- datPlot[datPlot$year <= input$yearEnd,]
+#         datPlot <- datPlot[!is.na(datPlot$varx), ]
+#         datPlotT <- datPlot[!is.na(datPlot$vary), ]
+#         datPlotT <- datPlotT[with(datPlotT, order(year)), ]
+#     })
     
     ## ****** ###
     # Plot
     
-    plotInputT <- reactive({
-        cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442")
-        datPlotT <- datasetInputT()
-        
-        ggplot(datPlotT, aes(x=varx, y=vary, 
-                             group=cntry,color=cntry,
-                             label=year)) +
-            geom_point(alpha=.5) + 
-            geom_path(alpha=.5)  +
-            geom_text(size=5, hjust=0.0, vjust=-0.5,alpha=.7) +
-            geom_text(data=merge(datPlotT, aggregate(year ~ cntry, datPlotT, max),
-                                 by=c("year","cntry")),
-                      aes(x=varx,y=vary,label=cntry),
-                      hjust=1,vjust=-1,size=5) + 
-            labs(x = input$variableX,
-                 y = input$variableY) + 
-            theme_minimal() +
-            scale_colour_manual(values=cbPalette) +
-            theme(legend.title=element_blank()) +
-            theme(legend.text=element_text(size=16)) +
-            theme(legend.position="top") +
-            theme(axis.title = element_text(size=16)) +
-            theme(axis.text = element_text(size=16))
-        
-    })
-    
-    
-    output$timeplot <- renderPlot({
-        print(plotInputT())
-    })
+#     plotInputT <- reactive({
+#       cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442","orange","dim grey")
+#       datPlotT <- datasetInput()
+#         
+#         ggplot(datPlotT, aes(x=varx, y=vary, 
+#                              group=cntry,color=group1,
+#                              label=year)) +
+#             geom_point(alpha=.5) + 
+#             geom_path(alpha=.5)  +
+#             geom_text(size=5, hjust=0.0, vjust=-0.5,alpha=.7) +
+#             geom_text(data=merge(datPlotT, aggregate(year ~ cntry, datPlotT, max),
+#                                  by=c("year","cntry")),
+#                       aes(x=varx,y=vary,label=cntry),
+#                       hjust=1,vjust=-1,size=5) + 
+#             labs(x = input$variableX,
+#                  y = input$variableY) + 
+#             theme_minimal() +
+#             scale_colour_manual(values=cbPalette) +
+#             theme(legend.title=element_blank()) +
+#             theme(legend.text=element_text(size=16)) +
+#             theme(legend.position="top") +
+#             theme(axis.title = element_text(size=16)) +
+#             theme(axis.text = element_text(size=16))
+#         
+#     })
+#     
+#     
+#     output$timeplot <- renderPlot({
+#         print(plotInputT())
+#     })
     
     ## Lineplot
-    
+datasetInputL <- reactive({
+  #varx <- datPlot$perGini
+  vary <- dat[, input$variableY]
+  varx <- dat[, input$variableX]
+  cntry <- as.character(dat$cname)
+  contName <- as.character(dat$contName)
+  group1 <- as.character(dat$group1)
+  year <- dat$year
+  datPlot <- data.frame(vary,varx,cntry,year,contName,group1)
+  datPlot <- datPlot[datPlot$year >= input$yearStart,]
+  datPlot <- datPlot[datPlot$year <= input$yearEnd,]
+  datPlot <- datPlot[!is.na(datPlot$varx), ]
+  datPlotT <- datPlot[!is.na(datPlot$vary), ]
+  datPlotT <- datPlotT[with(datPlotT, order(year)), ]
+})
+
+  
     plotInputL <- reactive({
-        cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442")
-        datPlotT <- datasetInputT()
+      cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442","orange","dim grey")
+      datPlot <- datasetInputL()
+      # cre4ate comparison data  
+      datComp <- datPlot[datPlot$cntry %in% c(input$Country1,
+                                              input$Country2,
+                                              input$Country3,
+                                              input$Country4,
+                                              input$Country5),]
+      if (input$Country1 != "none") {
+        comparison <- geom_line(data=datComp, aes(x=year, y=varx, 
+                                    group=cntry), color="red")
+          #geom_point(data=datComp, aes(x=year, y=varx, 
+          #                             group=cntry))
+          #geom_point(data=datComp, aes(x=year, y=varx, 
+          #                            group=cntry), color="red") #+
+          text <-  geom_text(data=merge(datComp, aggregate(year ~ cntry, datComp, max),
+                                by=c("year","cntry")),
+                     aes(x=year,y=varx,label=cntry),
+                     hjust=1,vjust=-1,size=5, color="red")
+          
+          
+      } else {comparison <- scale_y_continuous()
+              text <- scale_y_continuous()}
+      
+      
+      
+      # subset the continent
+      if (input$show_other == TRUE) datPlot <- datPlot
+      if (input$show_other == FALSE) datPlot <- datPlot[datPlot$group != "X_other",]
         
         if (input$log_scale == TRUE) scale <- scale_y_log10()
         if (input$log_scale == FALSE) scale <- scale_y_continuous()
-        
-        ggplot(datPlotT, aes(x=year, y=varx, 
-                             group=cntry,color=cntry,
+      
+      
+      
+        ggplot(datPlot, aes(x=year, y=varx, 
+                             group=cntry,color=group1,
                              label=year)) +
             geom_point(alpha=.5) + 
             geom_path(alpha=.5)  +
-            geom_text(size=5, hjust=0.0, vjust=-0.5,alpha=.7) +
-            geom_text(data=merge(datPlotT, aggregate(year ~ cntry, datPlotT, max),
+          #geom_text(size=5, hjust=0.0, vjust=-0.5,alpha=.7) +
+            geom_text(data=merge(datPlot, aggregate(year ~ cntry, datPlot, max),
                                  by=c("year","cntry")),
                       aes(x=year,y=varx,label=cntry),
                       hjust=1,vjust=-1,size=5) + 
@@ -265,10 +297,12 @@ shinyServer(function(input, output) {
             scale_colour_manual(values=cbPalette) +
             theme(legend.title=element_blank()) +
             theme(legend.text=element_text(size=16)) +
-            theme(legend.position="top") +
+            theme(legend.position="right") +
             theme(axis.title = element_text(size=16)) +
             theme(axis.text = element_text(size=16)) +
-            scale
+            scale +
+        comparison +
+        text
         
     })
     
@@ -333,57 +367,6 @@ shinyServer(function(input, output) {
         print(plotInputR())
     })
     
-    ## Map plot
-    
-    datasetInputMap <- reactive({
-        #varx <- datPlot$perGini
-        varx <- dat[, input$variableX]
-        cntry <- as.character(dat$cname)
-        contName <- as.character(dat$contName)
-        year <- dat$year
-        datPlot <- data.frame(varx,cntry,year,contName)
-        datPlot <- datPlot[!is.na(datPlot$varx),]
-        datPlot <- datPlot[!is.na(datPlot$cntry),]
-        datPlot <- merge(datPlot, aggregate(year ~ cntry, datPlot, max),
-                         by=c("year","cntry"))
-        
-    })
-    
-    plotInputMap <- reactive({
-        
-        datPlot <- datasetInputMap()
-        
-        # merge the data using rworldmap
-        library(rworldmap)
-        shape <- joinCountryData2Map(datPlot,joinCode = "NAME",nameJoinColumn = "cntry")
-        # fortify the SpatialPolygonDataFrame into data.frame
-        library(ggplot2)
-        shape$id <- rownames(shape@data)
-        map.points <- fortify(shape, region = "id")
-        map.df <- merge(map.points, shape, by = "id")
-        # order the data for smooth plotting
-        map.df <- map.df[order(map.df$order), ]
-        # and plot
-        cyear <- stats:::aggregate.formula(cbind(long, lat) ~ cntry+year, data=map.df, mean)
-        
-        library(ggplot2)
-        ggplot(map.df, aes(long,lat,group=group)) +
-            geom_polygon(aes(fill=varx)) +
-            geom_polygon(data = map.df, aes(long,lat), 
-                         fill=NA, 
-                         color = "white",
-                         size=0.1) + 
-             theme(legend.position="top") +
-            guides(fill = guide_legend(keywidth = 2, keyheight = 1)) +
-            labs(title=paste("Latest year",", indicator",input$variableX)) +
-            geom_text(data=cyear, aes(long, lat, label = year, group=cntry), 
-                      size=3, color="white")
-
-    })
-  
-    output$map <- renderPlot({
-        print(plotInputMap())
-    })
     
     
     
