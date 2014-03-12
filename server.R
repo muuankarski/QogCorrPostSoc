@@ -310,61 +310,152 @@ datasetInputL <- reactive({
         print(plotInputL())
     })
     
-    ## relative line plot
-    
-    plotInputR <- reactive({
-        cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442")
-        datPlotT <- datasetInputT()
-        relDat <-  merge(datPlotT, aggregate(year ~ cntry, datPlotT, min),
-                         by=c("year","cntry"))
-        relDat <- relDat[,c("year","cntry","varx")]
-        names(relDat)[3] <- "baseline"
-        dat_cntry1 <- datPlotT[datPlotT$cntry == input$Country1,]
-        dat_cntry2 <- datPlotT[datPlotT$cntry == input$Country2,]
-        dat_cntry3 <- datPlotT[datPlotT$cntry == input$Country3,]
-        dat_cntry4 <- datPlotT[datPlotT$cntry == input$Country4,]
-        dat_cntry5 <- datPlotT[datPlotT$cntry == input$Country5,]
-        
-        dat_cntry1_rl <- relDat[relDat$cntry == input$Country1,]
-        dat_cntry2_rl <- relDat[relDat$cntry == input$Country2,]
-        dat_cntry3_rl <- relDat[relDat$cntry == input$Country3,]
-        dat_cntry4_rl <- relDat[relDat$cntry == input$Country4,]
-        dat_cntry5_rl <- relDat[relDat$cntry == input$Country5,]
-        
-        dat_cntry1$rela <- dat_cntry1$varx / dat_cntry1_rl$baseline
-        dat_cntry2$rela <- dat_cntry2$varx / dat_cntry2_rl$baseline
-        dat_cntry3$rela <- dat_cntry3$varx / dat_cntry3_rl$baseline
-        dat_cntry4$rela <- dat_cntry4$varx / dat_cntry4_rl$baseline
-        dat_cntry5$rela <- dat_cntry5$varx / dat_cntry5_rl$baseline
-        
-        datPlotR <- rbind(dat_cntry1,dat_cntry2,
-                          dat_cntry3,dat_cntry4,
-                          dat_cntry5)
-        
-        ggplot(datPlotR, aes(x=year, y=rela, 
-                             group=cntry,color=cntry,
-                             label=year)) +
-            geom_point(alpha=.5) + 
-            geom_path(alpha=.5)  +
-            geom_text(size=5, hjust=0.0, vjust=-0.5,alpha=.7) +
-            geom_text(data=merge(datPlotR, aggregate(year ~ cntry, datPlotR, max),
-                                 by=c("year","cntry")),
-                      aes(x=year,y=rela,label=cntry),
-                      hjust=1,vjust=-1,size=5) + 
-            labs(x = "year",
-                 y = input$variableX) + 
-            theme_minimal() +
-            scale_colour_manual(values=cbPalette) +
-            theme(legend.title=element_blank()) +
-            theme(legend.text=element_text(size=16)) +
-            theme(legend.position="top") +
-            theme(axis.title = element_text(size=16)) +
-            theme(axis.text = element_text(size=16))
-        
-    })
+#     ## relative line plot
+# 
+# datasetInputR <- reactive({
+#   #varx <- datPlot$perGini
+#   vary <- dat[, input$variableY]
+#   varx <- dat[, input$variableX]
+#   cntry <- as.character(dat$cname)
+#   contName <- as.character(dat$contName)
+#   group1 <- as.character(dat$group1)
+#   year <- dat$year
+#   datPlot <- data.frame(vary,varx,cntry,year,contName,group1)
+#   datPlot <- datPlot[datPlot$year >= input$yearStart,]
+#   datPlot <- datPlot[datPlot$year <= input$yearEnd,]
+#   datPlot <- datPlot[!is.na(datPlot$varx), ]
+#   datPlotT <- datPlot[!is.na(datPlot$vary), ]
+#   datPlotT <- datPlotT[with(datPlotT, order(year)), ]
+#   # into wide format for relative figures
+#   datPlotT <- datPlotT[datPlotT$group1 != "X_other",]
+#   library(reshape2)
+#   datPlotT$year <- factor(paste("x",datPlotT$year,sep=""))
+#   datPlotT.w <- dcast(data=datPlotT, cntry + group1 ~ year, value.var="varx")
+#   A <- function(x) {x / datPlotT.w[,3] * 100}
+#   datPlotT.w <- as.data.frame(cbind(datPlotT.w[1:2], sapply(datPlotT.w[3:ncol(datPlotT.w)], A) ))
+#   datPlotTl <- melt(datPlotT.w, id.vars=c("cntry","group1"))
+#   datPlotTl$year <- gsub(x=datPlotTl$variable, pattern="x",replacement="")
+#   datPlotTl$year <- as.factor(datPlotTl$year)
+#   datPlotTl$year <- as.numeric(levels(datPlotTl$year))[datPlotTl$year]
+# })
+# 
+#     
+#     plotInputR <- reactive({
+#       datPlotTl <- datasetInputR()
+#         cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442","orange","dim grey")
+#         
+# #         datPlotR$year  <- as.character(datPlotR$year)
+# #         datPlotR$group1  <- as.character(datPlotR$group1)
+# #         datPlotR$cntry  <- as.character(datPlotR$cntry)
+# 
+#          ggplot(datPlotTl, aes(x=year, y=value)) +
+#            geom_point()
+#         
+#         ggplot(datPlotR, aes(x=factor(year), y=value, 
+#                              group=cntry,color=group1)) +
+#             geom_point(alpha=.5) + 
+#             geom_path(alpha=.5)  +
+#             geom_text(data=merge(datPlotR, aggregate(factor(year) ~ cntry, datPlotR, max),
+#                                  by=c("year","cntry")),
+#                       aes(x=factor(year),y=value,label=cntry),
+#                       hjust=1,vjust=-1,size=5) + 
+#             #labs(x = "year",
+#             #     y = input$variableX) + 
+#             theme_minimal() +
+#             scale_colour_manual(values=cbPalette) +
+#             theme(legend.title=element_blank()) +
+#             theme(legend.text=element_text(size=16)) +
+#             theme(legend.position="top") +
+#             theme(axis.title = element_text(size=16)) +
+#             theme(axis.text = element_text(size=16))
+#         
+#     })
     
     output$relaplot <- renderPlot({
-        print(plotInputR())
+        #print(plotInputR())
+      vary <- dat[, input$variableY]
+      varx <- dat[, input$variableX]
+      cntry <- as.character(dat$cname)
+      contName <- as.character(dat$contName)
+      group1 <- as.character(dat$group1)
+      year <- dat$year
+      datPlot <- data.frame(vary,varx,cntry,year,contName,group1)
+      datPlot <- datPlot[datPlot$year >= input$yearStart,]
+      datPlot <- datPlot[datPlot$year <= input$yearEnd,]
+      datPlot <- datPlot[!is.na(datPlot$varx), ]
+      datPlotT <- datPlot[!is.na(datPlot$vary), ]
+      datPlotT <- datPlotT[with(datPlotT, order(year)), ]
+      # into wide format for relative figures
+      datPlotT <- datPlotT[datPlotT$group1 != "X_other",]
+      library(reshape2)
+      datPlotT$year <- factor(paste("x",datPlotT$year,sep=""))
+      datPlotT.w <- dcast(data=datPlotT, cntry + group1 ~ year, value.var="varx")
+      A <- function(x) {x / datPlotT.w[,3] * 100}
+      datPlotT.w <- as.data.frame(cbind(datPlotT.w[1:2], sapply(datPlotT.w[3:ncol(datPlotT.w)], A) ))
+      datPlotTl <- melt(datPlotT.w, id.vars=c("cntry","group1"))
+      datPlotTl$year <- gsub(x=datPlotTl$variable, pattern="x",replacement="")
+      datPlotTl$year <- as.factor(datPlotTl$year)
+      datPlotTl$year <- as.numeric(levels(datPlotTl$year))[datPlotTl$year]
+      
+
+
+     if (input$Country1 != "none") {
+       datCompX <- datPlot[datPlot$group1 == "X_other",]
+       datComp <- datCompX[datCompX$cntry %in% c(input$Country1,
+                                               input$Country2,
+                                               input$Country3,
+                                               input$Country4,
+                                               input$Country5),]
+       datComp <- datComp[!is.na(datComp$vary), ]
+       datComp <- datComp[with(datComp, order(year)), ]
+       # into wide format for relative figures
+       library(reshape2)
+       datComp$year <- factor(paste("x",datComp$year,sep=""))
+       datComp.w <- dcast(data=datComp, cntry + group1 ~ year, value.var="varx")
+       A <- function(x) {x / datComp.w[,3] * 100}
+       datComp.w <- cbind(datComp.w[1:2], sapply(datComp.w[3:ncol(datComp.w)], A) )
+       datCompl <- melt(datComp.w, id.vars=c("cntry","group1"))
+       datCompl$year <- gsub(x=datCompl$variable, pattern="x",replacement="")
+       datCompl$year <- as.factor(datCompl$year)
+       datCompl$year <- as.numeric(levels(datCompl$year))[datCompl$year]
+       
+       comparisonR <- geom_line(data=datCompl, aes(x=year, y=value, 
+                                                  group=cntry), color="red")
+        #geom_point(data=datComp, aes(x=year, y=varx, 
+        #                             group=cntry))
+        #geom_point(data=datComp, aes(x=year, y=varx, 
+        #                            group=cntry), color="red") #+
+        textR <-  geom_text(data=merge(datCompl, aggregate(year ~ cntry, datCompl, max),
+                                      by=c("year","cntry")),
+                           aes(x=year,y=value,label=cntry),
+                           hjust=1,vjust=-1,size=5, color="red")
+      } else {comparisonR <- scale_y_continuous()
+              textR <- scale_y_continuous()}
+      
+      
+      
+      
+      p <- ggplot(datPlotTl, aes(x=year, y=value, 
+                                        group=cntry,color=group1)) +
+        geom_point(alpha=.5) + 
+        geom_path(alpha=.5)  +
+        geom_text(data=merge(datPlotTl, aggregate(year ~ cntry, datPlotTl, max),
+                             by=c("year","cntry")),
+                  aes(x=year,y=value,label=cntry),
+                  hjust=1,vjust=-1,size=5) + 
+        labs(x = "year",
+             y = input$variableX) + 
+        theme_minimal() +
+        scale_colour_manual(values=cbPalette) +
+        theme(legend.title=element_blank()) +
+        theme(legend.text=element_text(size=16)) +
+        theme(legend.position="top") +
+        theme(axis.title = element_text(size=16)) +
+        theme(axis.text = element_text(size=16)) +
+      comparisonR +
+      textR
+
+      print(p)
     })
     
     
