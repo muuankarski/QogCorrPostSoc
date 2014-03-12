@@ -372,7 +372,9 @@ datasetInputL <- reactive({
 #     })
     
     output$relaplot <- renderPlot({
-        #print(plotInputR())
+      cbPalette <- c("#000000", "#D55E00", "#56B4E9",  "#CC79A7", "#0072B2", "#F0E442","orange","dim grey")
+      
+      
       vary <- dat[, input$variableY]
       varx <- dat[, input$variableX]
       cntry <- as.character(dat$cname)
